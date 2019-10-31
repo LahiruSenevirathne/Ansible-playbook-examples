@@ -1,0 +1,11 @@
+[mysql]
+mysql.ip
+
+[hosts]
+ip1
+ip2
+ip3
+
+[master]
+kubernetes.master.ip
+

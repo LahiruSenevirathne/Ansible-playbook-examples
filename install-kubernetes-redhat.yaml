@@ -1,0 +1,62 @@
+- hosts: nodes
+  user: svradmin
+  become: yes
+  tasks:
+   - name: Disabling Swap on all nodes
+     shell: swapoff -a
+
+   - name: Commenting Swap entries in /etc/fstab
+     replace:
+      path: /etc/fstab
+      regexp: '(.*swap*)'
+      replace: '#\1'
+
+   - name: Creating a repository file for Kubernetes
+     file:
+      path: /etc/yum.repos.d/kubernetes.repo
+      state: touch
+
+   - name: Adding repository details in Kubernetes repo file.
+     blockinfile:
+      path: /etc/yum.repos.d/kubernetes.repo
+      block: |
+       [kubernetes]
+       name=Kubernetes
+       baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+       enabled=1
+       gpgcheck=1
+       repo_gpgcheck=1
+       gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+        https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+   - name: install kubelet
+     package:
+       name: kubelet-1.16.0
+       state: present
+   - name: install kubeadm
+     package:
+       name: kubeadm-1.16.0
+       state: present
+
+   - name: Starting and Enabling kubelet
+     service:
+      name: kubelet
+      state: started
+      enabled: yes
+   - name: install kubectl
+     package:
+       name: kubectl-1.16.0
+       state: present
+   - name: Enabling Bridge Firewall Rule
+     shell: "echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables"
+   - name: Enabling Bridge Firewall Rule
+     shell: "echo '1' > /proc/sys/net/ipv4/ip_forward"
+- hosts: master
+  user: svradmin
+  become: yes
+  tasks:
+   - name: install kubectl
+     yum:
+       name: kubectl-1.16.0
+       state: present
+       allow_downgrade: yes
+

@@ -1,0 +1,54 @@
+- hosts: nodes
+  user: svradmin
+  become: yes
+  tasks:
+   - name: Disabling Swap on all nodes
+     shell: swapoff -a
+
+   - name: Commenting Swap entries in /etc/fstab
+     replace:
+      path: /etc/fstab
+      regexp: '(.*swap*)'
+      replace: '#\1'
+   - name: "Installing container SE Linux"
+     yum: 
+        name: http://mirror.centos.org/centos/7/extras/x86_64/Packages/container-selinux-2.107-3.el7.noarch.rpm 
+
+   - name: Install yum utils for docker
+     package:
+        name: yum-utils
+        state: latest
+   - name: Install device-mapper-persistent-data
+     package:
+        name: device-mapper-persistent-data
+        state: latest
+   - name: Install lvm2
+     package:
+        name: lvm2
+        state: latest
+   - name: Add Docker repo
+     get_url:
+        url: https://download.docker.com/linux/centos/docker-ce.repo
+        dest: /etc/yum.repos.d/docer-ce.repo
+     become: yes
+   - name: Install Docker
+     package:
+        #name: docker-ce
+        name: docker-ce-18.06.3.ce-3.el7.x86_64
+        state: latest
+     become: yes
+
+#CLI is not required for docker version 18.06.3.ce-3.el7.x86_64 as it is installed with docker ce
+   #- name: install Docker CLI
+     #package:
+      #name: docker-ce-cli
+    #  name: docker-ce-cli-18.06.3.ce-3.el7.x86_64
+    #  state: latest
+     #become: yes
+
+   - name: Start Docker service
+     service:
+        name: docker
+        state: started
+        enabled: yes
+     become: yes
